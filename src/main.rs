@@ -55,3 +55,17 @@ fn main() {
 
     // pretty::print_batches(&batches).expect("Failed to print batches");
 }
+
+#[test]
+fn test_driver_setup() {
+    const SNOWFLAKE_DRIVER_NAME: &str = "snowflake";
+    let mut driver = ManagedDriver::load_from_name(
+        SNOWFLAKE_DRIVER_NAME,
+        None,
+        AdbcVersion::default(),
+        LOAD_FLAG_DEFAULT,
+        None,
+    )
+    .unwrap();
+    println!("Driver loaded");
+}
