@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-adbc_core = "0.21.0"
-adbc_driver_manager = "0.21.0"
+adbc_core = { git = "https://github.com/Pranav2612000/arrow-adbc", branch = "fix/fix-hang-during-dlopen-mac", directory = "rust/core" }
+adbc_driver_manager = { git = "https://github.com/Pranav2612000/arrow-adbc", branch = "fix/fix-hang-during-dlopen-mac", directory = "rust/driver_manager" }
 arrow = { version = "57.0.0", features = ["prettyprint"] }
 arrow-array = "57.0.0"
