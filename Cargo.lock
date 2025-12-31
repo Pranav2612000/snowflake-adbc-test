@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "adbc_core"
 version = "0.22.0"
-source = "git+https://github.com/Pranav2612000/arrow-adbc?branch=fix%2Ffix-hang-during-dlopen-mac#5fdead72b9198ac0fa9f360563cfd523afb631f3"
+source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=0bfa25#0bfa25351b54eb2d1ea1333df0e2ead147e5880e"
 dependencies = [
  "arrow-array",
  "arrow-schema",
@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "adbc_driver_manager"
 version = "0.22.0"
-source = "git+https://github.com/Pranav2612000/arrow-adbc?branch=fix%2Ffix-hang-during-dlopen-mac#5fdead72b9198ac0fa9f360563cfd523afb631f3"
+source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=0bfa25#0bfa25351b54eb2d1ea1333df0e2ead147e5880e"
 dependencies = [
  "adbc_core",
  "adbc_ffi",
@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "adbc_ffi"
 version = "0.22.0"
-source = "git+https://github.com/Pranav2612000/arrow-adbc?branch=fix%2Ffix-hang-during-dlopen-mac#5fdead72b9198ac0fa9f360563cfd523afb631f3"
+source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=0bfa25#0bfa25351b54eb2d1ea1333df0e2ead147e5880e"
 dependencies = [
  "adbc_core",
  "arrow-array",
