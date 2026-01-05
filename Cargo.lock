@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "adbc_core"
 version = "0.22.0"
-source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=950483e1bcf51864ffc44e9aef9a45af75a40ab9#950483e1bcf51864ffc44e9aef9a45af75a40ab9"
+source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=d0d2c9447cb658468567a84c6be99e185b44507b#d0d2c9447cb658468567a84c6be99e185b44507b"
 dependencies = [
  "arrow-array",
  "arrow-schema",
@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "adbc_driver_manager"
 version = "0.22.0"
-source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=950483e1bcf51864ffc44e9aef9a45af75a40ab9#950483e1bcf51864ffc44e9aef9a45af75a40ab9"
+source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=d0d2c9447cb658468567a84c6be99e185b44507b#d0d2c9447cb658468567a84c6be99e185b44507b"
 dependencies = [
  "adbc_core",
  "adbc_ffi",
@@ -29,7 +29,7 @@ dependencies = [
 [[package]]
 name = "adbc_ffi"
 version = "0.22.0"
-source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=950483e1bcf51864ffc44e9aef9a45af75a40ab9#950483e1bcf51864ffc44e9aef9a45af75a40ab9"
+source = "git+https://github.com/Pranav2612000/arrow-adbc?rev=d0d2c9447cb658468567a84c6be99e185b44507b#d0d2c9447cb658468567a84c6be99e185b44507b"
 dependencies = [
  "adbc_core",
  "arrow-array",
