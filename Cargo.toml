@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-adbc_core = { git = "https://github.com/Pranav2612000/arrow-adbc", directory = "rust/core", rev = "d0d2c9447cb658468567a84c6be99e185b44507b" }
-adbc_driver_manager = { git = "https://github.com/Pranav2612000/arrow-adbc", directory = "rust/driver_manager", rev = "d0d2c9447cb658468567a84c6be99e185b44507b" }
+adbc_core = "0.22.0"
+adbc_driver_manager = "0.22.0"
 arrow = { version = "57.0.0", features = ["prettyprint"] }
-arrow-array = "57.0.0"
-arrow-schema = "57.0.0"
+arrow-array = { version = "57.0.0", features = ["chrono-tz"] }
+arrow-schema = "57.1.0"
