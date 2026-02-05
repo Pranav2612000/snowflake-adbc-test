@@ -1,8 +1,10 @@
-use adbc_core::options::{AdbcVersion, OptionDatabase};
-use adbc_core::{Connection, Database, Driver, LOAD_FLAG_DEFAULT, Statement};
+use adbc_core::constants::ADBC_INGEST_OPTION_MODE_CREATE_APPEND;
+use adbc_core::options::{AdbcVersion, OptionDatabase, OptionStatement, OptionValue};
+use adbc_core::{Connection, Database, Driver, Optionable, Statement, LOAD_FLAG_DEFAULT};
 use adbc_driver_manager::ManagedDriver;
-use arrow::util::pretty;
-use arrow_array::RecordBatch;
+use arrow_array::{Int32Array, RecordBatch, StringArray};
+use arrow_schema::{DataType, Field, Schema};
+use std::sync::Arc;
 
 fn main() {
     let mut driver = ManagedDriver::load_from_name(
@@ -44,16 +46,101 @@ fn main() {
 
     let mut conn = db.new_connection().expect("Failed to create connection");
 
-    let mut statement: adbc_driver_manager::ManagedStatement = conn.new_statement().unwrap();
-    statement
-        .set_sql_query("MERGE INTO \"sample-flight-data\" AS target USING (SELECT 'pj_fVJsBQRHMz7XyDDY7' AS \"_id\", 'MEL' AS \"OriginAirportID\", 'K5XKPY3' AS \"FlightNum\", 'Melbourne International Airport' AS \"Origin\", '{\"lon\":\"144.843002\",\"lat\":\"-37.673302\"}' AS \"OriginLocation\", '{\"lon\":\"-70.30930328\",\"lat\":\"43.64619827\"}' AS \"DestLocation\", FALSE AS \"FlightDelay\", 10563.139984406853 AS \"DistanceMiles\", 1307.6712273127123 AS \"FlightTimeMin\", 'Cloudy' AS \"OriginWeather\", 5 AS \"dayOfWeek\", 945.9915458470314 AS \"AvgTicketPrice\", 'OpenSearch Dashboards Airlines' AS \"Carrier\", 0 AS \"FlightDelayMin\", 'SE-BD' AS \"OriginRegion\", 'No Delay' AS \"FlightDelayType\", 'PWM' AS \"DestAirportID\", '2025-11-26T08:58:17Z' AS \"timestamp\", 'Portland International Jetport Airport' AS \"Dest\", 21.79452045521187 AS \"FlightTimeHour\", FALSE AS \"Cancelled\", 16999.725955065263 AS \"DistanceKilometers\", 'Melbourne' AS \"OriginCityName\", 'Rain' AS \"DestWeather\", 'AU' AS \"OriginCountry\", 'US' AS \"DestCountry\", 'US-ME' AS \"DestRegion\", 'Portland' AS \"DestCityName\") AS source ON target.\"_id\" = source.\"_id\" WHEN MATCHED THEN UPDATE SET \"OriginAirportID\" = 'MEL', \"FlightNum\" = 'K5XKPY3', \"Origin\" = 'Melbourne International Airport', \"OriginLocation\" = '{\"lon\":\"144.843002\",\"lat\":\"-37.673302\"}', \"DestLocation\" = '{\"lon\":\"-70.30930328\",\"lat\":\"43.64619827\"}', \"FlightDelay\" = FALSE, \"DistanceMiles\" = 10563.139984406853, \"FlightTimeMin\" = 1307.6712273127123, \"OriginWeather\" = 'Cloudy', \"dayOfWeek\" = 5, \"AvgTicketPrice\" = 945.9915458470314, \"Carrier\" = 'OpenSearch Dashboards Airlines', \"FlightDelayMin\" = 0, \"OriginRegion\" = 'SE-BD', \"FlightDelayType\" = 'No Delay', \"DestAirportID\" = 'PWM', \"timestamp\" = '2025-11-26T08:58:17Z', \"Dest\" = 'Portland International Jetport Airport', \"FlightTimeHour\" = 21.79452045521187, \"Cancelled\" = FALSE, \"DistanceKilometers\" = 16999.725955065263, \"OriginCityName\" = 'Melbourne', \"DestWeather\" = 'Rain', \"OriginCountry\" = 'AU', \"DestCountry\" = 'US', \"DestRegion\" = 'US-ME', \"DestCityName\" = 'Portland' WHEN NOT MATCHED THEN INSERT (\"_id\", \"OriginAirportID\", \"FlightNum\", \"Origin\", \"OriginLocation\", \"DestLocation\", \"FlightDelay\", \"DistanceMiles\", \"FlightTimeMin\", \"OriginWeather\", \"dayOfWeek\", \"AvgTicketPrice\", \"Carrier\", \"FlightDelayMin\", \"OriginRegion\", \"FlightDelayType\", \"DestAirportID\", \"timestamp\", \"Dest\", \"FlightTimeHour\", \"Cancelled\", \"DistanceKilometers\", \"OriginCityName\", \"DestWeather\", \"OriginCountry\", \"DestCountry\", \"DestRegion\", \"DestCityName\") VALUES ('aw_fVJsBQRHMz7XyDDY7', 'MEL', 'K5XKPY3', 'Melbourne International Airport', '{\"lon\":\"144.843002\",\"lat\":\"-37.673302\"}', '{\"lon\":\"-70.30930328\",\"lat\":\"43.64619827\"}', FALSE, 10563.139984406853, 1307.6712273127123, 'Cloudy', 5, 945.9915458470314, 'OpenSearch Dashboards Airlines', 0, 'SE-BD', 'No Delay', 'PWM', '2025-11-26T08:58:17Z', 'Portland International Jetport Airport', 21.79452045521187, FALSE, 16999.725955065263, 'Melbourne', 'Rain', 'AU', 'US', 'US-ME', 'Portland');")
-        .unwrap();
-    println!("Executing statement");
-    let reader = statement.execute_update().unwrap();
-    println!("Statement executed");
-    // let batches: Vec<RecordBatch> = reader.collect::<Result<_, _>>().unwrap();
+    // Create initial schema with two fields: id and name
+    let schema = Schema::new(vec![
+        Field::new("id", DataType::Int32, false),
+        Field::new("name", DataType::Utf8, false),
+    ]);
 
-    // pretty::print_batches(&batches).expect("Failed to print batches");
+    // Create first batch of data
+    let id_array = Int32Array::from(vec![1, 2, 3]);
+    let name_array = StringArray::from(vec!["Alice", "Bob", "Charlie"]);
+
+    let batch1 = RecordBatch::try_new(
+        Arc::new(schema.clone()),
+        vec![Arc::new(id_array), Arc::new(name_array)],
+    )
+    .expect("Failed to create record batch");
+
+    println!("First batch created with {} rows", batch1.num_rows());
+
+    // Perform bulk insert with CREATE_APPEND mode
+    let mut stmt = conn.new_statement().expect("Failed to create statement");
+
+    // Set the target table name
+    stmt.set_option(
+        OptionStatement::TargetTable,
+        OptionValue::String("test_table".to_string()),
+    )
+    .expect("Failed to set target table");
+
+    // Set ingest mode to CREATE_APPEND
+    stmt.set_option(
+        OptionStatement::IngestMode,
+        OptionValue::String(ADBC_INGEST_OPTION_MODE_CREATE_APPEND.to_string()),
+    )
+    .expect("Failed to set ingest mode");
+
+    // Bind and execute the bulk insert
+    stmt.bind(batch1).expect("Failed to bind batch");
+    stmt.execute_update()
+        .expect("Failed to execute bulk insert");
+
+    println!("First bulk insert completed");
+
+    // Create extended schema with an additional field: age
+    let extended_schema = Schema::new(vec![
+        Field::new("id", DataType::Int32, false),
+        Field::new("name", DataType::Utf8, false),
+        Field::new("age", DataType::Int32, false),
+    ]);
+
+    // Create second batch with the extra field
+    let id_array2 = Int32Array::from(vec![4, 5]);
+    let name_array2 = StringArray::from(vec!["David", "Eve"]);
+    let age_array = Int32Array::from(vec![30, 25]);
+
+    let batch2 = RecordBatch::try_new(
+        Arc::new(extended_schema),
+        vec![
+            Arc::new(id_array2),
+            Arc::new(name_array2),
+            Arc::new(age_array),
+        ],
+    )
+    .expect("Failed to create second record batch");
+
+    println!(
+        "Second batch created with {} rows and {} columns",
+        batch2.num_rows(),
+        batch2.num_columns()
+    );
+
+    // Create a new statement for the second insert
+    let mut stmt2 = conn.new_statement().expect("Failed to create statement");
+
+    stmt2
+        .set_option(
+            OptionStatement::TargetTable,
+            OptionValue::String("test_table".to_string()),
+        )
+        .expect("Failed to set target table");
+
+    stmt2
+        .set_option(
+            OptionStatement::IngestMode,
+            OptionValue::String(ADBC_INGEST_OPTION_MODE_CREATE_APPEND.to_string()),
+        )
+        .expect("Failed to set ingest mode");
+
+    // Bind and execute the second bulk insert with extra field
+    stmt2.bind(batch2).expect("Failed to bind second batch");
+    stmt2
+        .execute_update()
+        .expect("Failed to execute second bulk insert");
+
+    println!("Second bulk insert completed with extra field 'age'");
+    println!("All operations completed successfully!");
 }
 
 #[test]
